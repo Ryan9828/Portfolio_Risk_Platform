@@ -1,0 +1,53 @@
+# Portfolio and model configuration — single source of truth for the pipeline and dashboard.
+# Weights must sum to 1.0. Benchmarks are tracked (vol modelled, displayed) but excluded
+# from portfolio VaR.
+
+assets:
+  portfolio:
+    CBA.AX: 0.1125
+    BHP.AX: 0.1125
+    CSL.AX: 0.1125
+    WES.AX: 0.1125
+    MQG.AX: 0.1125
+    WBC.AX: 0.1125
+    TLS.AX: 0.1125
+    WOW.AX: 0.1125
+    BTC-USD: 0.10
+  benchmarks:
+    - "^AXJO"
+    - "AUDUSD=X"
+  index_ticker: "^AXJO"
+
+history:
+  backfill_years: 3
+  min_obs_garch: 250
+  max_ffill_days: 5
+  ingest_overlap_days: 7
+
+models:
+  garch:
+    default: GARCH        # GARCH(1,1)
+    egarch_assets:
+      - BTC-USD
+    dist: t
+    rescale: 100.0
+  var:
+    confidences: [0.95, 0.99]
+    horizons: [1, 10]
+    mc_sims: 10000
+    mc_seed: 42
+    hs_window: 500
+
+backtest:
+  window: 500
+  refit_every: 5
+
+monitoring:
+  psi_bins: 10
+  psi_warn: 0.10
+  psi_alert: 0.25
+  psi_reference_window: [750, 250]   # returns[-750:-250]
+  psi_current_window: 60             # returns[-60:]
+  jump_zscore: 6.0
+  jump_vol_window: 60
+  stale_days_alert: 3

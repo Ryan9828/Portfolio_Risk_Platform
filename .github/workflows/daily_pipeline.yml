@@ -1,0 +1,54 @@
+name: daily-risk-pipeline
+
+on:
+  schedule:
+    # 07:30 UTC = 17:30 AEST / 18:30 AEDT — after ASX close in both regimes
+    - cron: "30 7 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force_test_alert:
+        description: "Set to 1 to file a test risk-alert issue (alert-path verification)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: daily-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run daily risk pipeline
+        run: python -m riskplatform.pipeline run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          FORCE_TEST_ALERT: ${{ github.event.inputs.force_test_alert || '0' }}
+
+      - name: Commit data artifacts
+        run: |
+          git config user.name "risk-bot"
+          git config user.email "actions@github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "no data changes to commit"
+          else
+            git commit -m "data: daily update $(date -u +%F) [skip ci]"
+            git push
+          fi
