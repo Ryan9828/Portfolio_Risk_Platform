@@ -8,7 +8,7 @@ close it ingests prices, refits GARCH volatility models, computes portfolio VaR 
 Expected Shortfall three ways, backtests itself Basel-style, runs data-quality and drift
 checks, files GitHub issues on alerts, and publishes the results to a public dashboard.
 
-**Live dashboard**: _link added after first deployment_
+**Live dashboard**: https://ryan9828-portfolio-risk-platform.streamlit.app
 
 ## What it does
 
