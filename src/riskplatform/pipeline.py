@@ -64,6 +64,8 @@ def cmd_run(settings: Settings, data_dir: Path, offline: bool, dry_run_alerts: b
         and pd.to_datetime(prior_metrics["date"]).max() >= asof
     ):
         log.info("no new ASX session since %s — nothing to do (holiday-safe exit)", asof.date())
+        # still honour FORCE_TEST_ALERT so the alert path can be verified any day
+        send_alerts([], str(asof.date()), dry_run=dry_run_alerts)
         return 0
 
     calendar = build_master_calendar(prices, settings.index_ticker)

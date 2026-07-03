@@ -1,7 +1,7 @@
 # Portfolio Market-Risk Platform
 
-[![ci](https://github.com/rwmurray234/Portfolio_Risk_Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/rwmurray234/Portfolio_Risk_Platform/actions/workflows/ci.yml)
-[![daily-risk-pipeline](https://github.com/rwmurray234/Portfolio_Risk_Platform/actions/workflows/daily_pipeline.yml/badge.svg)](https://github.com/rwmurray234/Portfolio_Risk_Platform/actions/workflows/daily_pipeline.yml)
+[![ci](https://github.com/Ryan9828/Portfolio_Risk_Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Ryan9828/Portfolio_Risk_Platform/actions/workflows/ci.yml)
+[![daily-risk-pipeline](https://github.com/Ryan9828/Portfolio_Risk_Platform/actions/workflows/daily_pipeline.yml/badge.svg)](https://github.com/Ryan9828/Portfolio_Risk_Platform/actions/workflows/daily_pipeline.yml)
 
 A **live, self-monitoring market-risk system** — not a notebook. Every weekday after ASX
 close it ingests prices, refits GARCH volatility models, computes portfolio VaR and
