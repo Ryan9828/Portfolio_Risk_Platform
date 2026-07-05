@@ -75,8 +75,8 @@ def _seed_announcements(data_dir, n=2):
 
 def test_asx_codes_only_ax_tickers(settings):
     codes = asx_codes(settings)
-    assert codes["WOW"] == "WOW.AX"
-    assert "BTC-USD" not in codes.values() and len(codes) == 8
+    assert all(ticker.endswith(".AX") for ticker in codes.values())
+    assert set(codes) == {t[:-3] for t in settings.portfolio_tickers if t.endswith(".AX")}
 
 
 def test_parse_feed_schema_and_drops_keyless():

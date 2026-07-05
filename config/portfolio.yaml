@@ -4,18 +4,12 @@
 
 assets:
   portfolio:
-    CBA.AX: 0.1125
-    BHP.AX: 0.1125
-    CSL.AX: 0.1125
-    WES.AX: 0.1125
-    MQG.AX: 0.1125
-    WBC.AX: 0.1125
-    TLS.AX: 0.1125
-    WOW.AX: 0.1125
-    BTC-USD: 0.10
+    VGS.AX: 0.40    # Vanguard MSCI Index International Shares
+    VAS.AX: 0.30    # Vanguard Australian Shares Index
+    NDQ.AX: 0.30    # Betashares Nasdaq 100
   benchmarks:
     - "^AXJO"
-    - "AUDUSD=X"
+    - "AUDUSD=X"    # VGS/NDQ are unhedged — AUD/USD drives part of their AUD returns
   index_ticker: "^AXJO"
 
 history:
@@ -27,8 +21,7 @@ history:
 models:
   garch:
     default: GARCH        # GARCH(1,1)
-    egarch_assets:
-      - BTC-USD
+    egarch_assets: []     # none — add tickers here for asymmetric-vol assets
     dist: t
     rescale: 100.0
   var:

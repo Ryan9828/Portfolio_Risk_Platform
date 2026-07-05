@@ -1,9 +1,9 @@
 """Calendar alignment and log-return construction.
 
-The master calendar is the set of observed ^AXJO trading days. FX and crypto trade
-on other calendars (BTC trades weekends); they are forward-filled onto the ASX grid
-(limit `max_ffill_days`), so a weekend BTC move shows up in Monday's return. This
-convention — mark everything at ASX close — is disclosed in docs/methodology.md.
+The master calendar is the set of observed ^AXJO trading days. Series on other
+calendars (e.g. the 24/5 AUD/USD benchmark) are forward-filled onto the ASX grid
+(limit `max_ffill_days`). This convention — mark everything at ASX close — is
+disclosed in docs/methodology.md.
 """
 
 from __future__ import annotations

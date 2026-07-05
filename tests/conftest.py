@@ -23,7 +23,6 @@ def fixture_prices(settings) -> pd.DataFrame:
     rng = np.random.default_rng(SEED)
     dates = pd.bdate_range(end="2026-06-30", periods=N_DAYS)
     vols = {t: 0.012 for t in settings.all_tickers}
-    vols["BTC-USD"] = 0.035
     vols["AUDUSD=X"] = 0.006
     frames = []
     for ticker, vol in vols.items():

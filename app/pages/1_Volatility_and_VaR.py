@@ -29,7 +29,7 @@ wide = dash.returns_wide(returns_table)
 st.subheader("Annualised volatility (EWMA λ=0.94)")
 sel = st.multiselect(
     "Series",
-    [PORTFOLIO_TICKER, settings.index_ticker, "BTC-USD", "AUDUSD=X"],
+    [PORTFOLIO_TICKER] + settings.all_tickers,
     default=[PORTFOLIO_TICKER, settings.index_ticker],
     max_selections=4,
 )
@@ -122,8 +122,8 @@ layout3 = {**dash.PLOTLY_LAYOUT, "hovermode": "closest"}
 fig3.update_layout(**layout3, height=460)
 st.plotly_chart(fig3, width="stretch")
 st.caption(
-    "The bank pairs (CBA–WBC) and diversified miners vs banks structure drives how much "
-    "diversification the Monte Carlo VaR credits relative to a single-asset view. BTC's low "
-    "correlation to ASX names is why a 10% sleeve adds less portfolio VaR than its "
-    "standalone volatility suggests."
+    "The correlation structure drives how much diversification the Monte Carlo VaR credits "
+    "relative to a single-asset view. VGS and NDQ overlap heavily (NDQ is a concentrated "
+    "subset of the same US large-caps), so the real diversifier in this portfolio is VAS — "
+    "and the unhedged AUD/USD exposure that moves VGS and NDQ but not VAS."
 )

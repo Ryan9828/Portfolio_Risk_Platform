@@ -31,7 +31,7 @@ COLUMNS = ["doc_key", "date", "ticker", "headline", "ann_type", "price_sensitive
 
 
 def asx_codes(settings: Settings) -> dict[str, str]:
-    """Map ASX code (e.g. 'WOW') -> portfolio ticker (e.g. 'WOW.AX')."""
+    """Map ASX code (e.g. 'VGS') -> portfolio ticker (e.g. 'VGS.AX')."""
     return {t[:-3]: t for t in settings.portfolio_tickers if t.endswith(".AX")}
 
 

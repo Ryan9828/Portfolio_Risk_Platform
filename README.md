@@ -15,9 +15,9 @@ checks, files GitHub issues on alerts, and publishes the results to a public das
 ```
 GitHub Actions (cron, weekdays 07:30 UTC ≈ ASX close + 90min)
  └─ python -m riskplatform.pipeline run
-     ├─ ingest      Yahoo Finance adjusted closes, 11 tickers, idempotent upsert
-     ├─ returns     ASX master calendar, ffill FX/crypto, portfolio log returns
-     ├─ model       GARCH(1,1)-t per series (EGARCH for BTC), fallback chain → EWMA
+     ├─ ingest      Yahoo Finance adjusted closes, 5 tickers, idempotent upsert
+     ├─ returns     ASX master calendar, ffill the FX benchmark, portfolio log returns
+     ├─ model       GARCH(1,1)-t per series, fallback chain → EWMA
      ├─ risk        VaR + ES, 95%/99% × 1d/10d × {parametric-n, parametric-t,
      │              historical, Monte Carlo (10k correlated paths)}
      ├─ backtest    500-day walk-forward; Kupiec, Christoffersen, Basel traffic light
@@ -33,8 +33,9 @@ the dashboard, so what you see is exactly what the audited pipeline produced.
 
 ## Portfolio
 
-8 ASX blue chips (CBA, BHP, CSL, WES, MQG, WBC, TLS, WOW) equal-weight 11.25% + 10%
-BTC-USD, benchmarked against the S&P/ASX 200 and AUD/USD. Configured in
+Three ASX-listed ETFs — 40% VGS (international shares), 30% VAS (Australian shares),
+30% NDQ (Nasdaq 100) — benchmarked against the S&P/ASX 200 and AUD/USD (VGS and NDQ are
+unhedged, so the currency matters). Configured in
 [config/portfolio.yaml](config/portfolio.yaml).
 
 ## Announcement intelligence (NLP layer)
