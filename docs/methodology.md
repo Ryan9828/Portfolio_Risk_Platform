@@ -11,18 +11,18 @@ for a fixed-weight multi-asset portfolio, validates those estimates out-of-sampl
 monitors its own inputs and outputs. It is a demonstration system: no real positions,
 no intraday risk, and simple fixed weights (no rebalancing drift, no cash flows).
 
-**Portfolio**: 8 ASX blue chips at 11.25% each (90%) + BTC-USD at 10%.
+**Portfolio**: three ASX-listed ETFs — VGS.AX (international shares) 40%, VAS.AX
+(Australian shares) 30%, NDQ.AX (Nasdaq 100) 30%. VGS and NDQ are unhedged, so AUD/USD
+is a material driver of their AUD returns.
 **Benchmarks** (tracked, not in portfolio VaR): S&P/ASX 200 (^AXJO), AUD/USD.
 
 ## 2. Data
 
-- **Source**: Yahoo Finance adjusted closes (`auto_adjust=True` — dividend and split
-  adjusted, essential for high-yield ASX banks).
-- **Master calendar**: observed ^AXJO trading days. FX and crypto trade on other calendars;
-  their prices are forward-filled onto the ASX grid (limit 5 sessions). **Consequence**: a
-  weekend BTC move appears in Monday's return. This is the correct convention for a
-  portfolio marked at ASX close, but it slightly understates BTC's weekday-frequency
-  volatility.
+- **Source**: Yahoo Finance adjusted closes (`auto_adjust=True` — distribution and split
+  adjusted, essential for income-paying ETFs).
+- **Master calendar**: observed ^AXJO trading days. All three ETFs trade on that calendar
+  natively; the AUD/USD benchmark trades 24/5 and is forward-filled onto the ASX grid
+  (limit 5 sessions). Everything is marked at ASX close.
 - **Returns**: daily log returns. The portfolio return is the weighted sum of simple
   returns (converted back to log), i.e. fixed daily rebalancing to target weights.
 - **Ingestion** re-fetches a 7-day overlap window daily; artifacts are upserted keyed on
@@ -33,7 +33,8 @@ no intraday risk, and simple fixed weights (no rebalancing drift, no cash flows)
 Each series (every asset, each benchmark, and the portfolio itself) gets a daily fit:
 
 - **Default**: GARCH(1,1) with Student-t innovations, zero mean, on returns ×100.
-- **BTC-USD**: EGARCH(1,1,1) with Student-t (asymmetric volatility response).
+- EGARCH(1,1,1)-t is available per asset via `models.garch.egarch_assets` for series with
+  asymmetric volatility response (none currently configured).
 - **Fallback chain** (recorded and displayed whenever used):
   GARCH-t → GARCH-normal → RiskMetrics EWMA (λ = 0.94).
   A fit "fails" on non-convergence, a degenerate forecast, or < 250 observations.

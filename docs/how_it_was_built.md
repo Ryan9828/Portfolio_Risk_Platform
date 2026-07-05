@@ -55,7 +55,11 @@ any laptop clone all read identical state.
 │   ├── backtest_results.parquet   daily walk-forward forecasts vs realised
 │   ├── backtest_summary.parquet   Kupiec/Christoffersen/traffic-light verdicts
 │   ├── monitor_status.json        latest run's check results + per-asset fit status
-│   └── alerts_history.parquet     every WARN/ALERT ever raised
+│   ├── alerts_history.parquet     every WARN/ALERT ever raised
+│   ├── announcements.parquet      ASX announcement headlines (keyed on doc_key)
+│   ├── announcement_signals.parquet   LLM-extracted signals + per-call cost/latency
+│   ├── announcement_event_study.parquet  abnormal returns + vol regimes per event
+│   └── intel_eval_metrics.json    golden-set precision/recall for the extraction
 ├── src/riskplatform/            the installable package (src layout, pyproject.toml)
 │   ├── config.py                  YAML → frozen typed dataclasses
 │   ├── ingestion.py               yfinance fetch, retries, tz-naive normalisation
@@ -67,10 +71,16 @@ any laptop clone all read identical state.
 │   ├── alerting.py                GitHub-issue filing with dedupe
 │   ├── artifacts.py               idempotent upsert — the ONLY write path
 │   ├── dashboard.py               shared loaders + chart palette for the app
-│   └── pipeline.py                CLI entry point (backfill | run | backtest)
-├── app/                         Streamlit pages (Home + 4 subpages), thin readers
+│   ├── pipeline.py                CLI entry point (backfill | run | backtest | intel)
+│   └── intel/                     announcement intelligence layer (see §11)
+│       ├── ingest.py                ASX announcement feed → announcements.parquet
+│       ├── extract.py               Claude structured-output extraction + cost audit
+│       ├── events.py                event study vs abnormal returns and realised vol
+│       └── evals.py                 golden-set labelling + scoring CLI
+├── app/                         Streamlit pages (Home + 5 subpages), thin readers
+├── evals/                       hand-labelled golden set for the extraction step
 ├── docs/                        methodology + this documentation
-├── tests/                       24 offline tests (see §7)
+├── tests/                       32 offline tests (see §7)
 └── .github/workflows/
     ├── daily_pipeline.yml         the nightly cron job
     └── ci.yml                     pytest on every push
@@ -90,11 +100,10 @@ keeping the newest, atomic write (temp file + `os.replace`). Consequences:
 - Ingestion deliberately re-fetches a 7-day overlap window every run, so late dividend
   adjustments in Yahoo's data self-heal by overwriting the affected rows.
 
-**The calendar problem.** The portfolio mixes three trading calendars: ASX stocks
-(Mon–Fri, AU holidays), FX (24/5), Bitcoin (24/7). The rule: **the master calendar is
-the observed ^AXJO trading days**; everything else is forward-filled onto it (limit 5
-sessions). A weekend BTC move therefore lands in Monday's return — correct for a
-portfolio marked at ASX close, and disclosed in the methodology.
+**The calendar problem.** The portfolio's ETFs all trade on the ASX calendar, but the
+AUD/USD benchmark trades 24/5. The rule: **the master calendar is the observed ^AXJO
+trading days**; anything on another calendar is forward-filled onto it (limit 5
+sessions), marking everything at ASX close — disclosed in the methodology.
 
 **Timezones** are annihilated at the boundary: `ingestion.py` normalises every timestamp
 to a tz-naive date immediately; nothing downstream ever sees a timezone.
@@ -155,7 +164,7 @@ re-enables. Any small commit resets the clock.
 
 ## 7. Testing strategy
 
-24 tests, **fully offline** — CI never touches Yahoo Finance. Three layers:
+32 tests, **fully offline** — CI never touches Yahoo Finance or the Claude API. Three layers:
 
 1. **Known-answer tests** pin the mathematics to hand-computed values: normal 95% VaR on
    σ = 1% must equal 1.64485%; the Kupiec statistic for 5 breaches in 250 days must be
@@ -169,6 +178,12 @@ re-enables. Any small commit resets the clock.
 3. **End-to-end integration**: the full pipeline runs against synthetic GBM price
    fixtures in a temp directory — every artifact must appear, schemas validate, no NaNs,
    and a second run must be a clean no-op.
+
+The intel layer follows the same discipline (`tests/test_intel.py`): the feed parser
+runs against a captured payload, the LLM client is a stub (so tests are free and
+deterministic), extraction is proven idempotent and cost-capped, a single failing call
+is proven non-fatal, and the event study must detect a synthetic vol-regime change and
+drop events with insufficient history.
 
 ## 8. Dashboard engineering
 
@@ -208,3 +223,84 @@ Known limitations (also stated in the methodology, § "deliberately disclosed"):
 Gaussian Monte Carlo shocks (no tail dependence), √10 historical scaling, fixed
 portfolio weights, a single external data vendor. Each is a conscious scope decision
 with the upgrade path documented above.
+
+## 11. The announcement-intelligence layer
+
+### 11.1 What it is and why it exists
+
+GARCH is reactive: it learns about a shock only after the shock appears in returns.
+Company announcements are the most common *cause* of single-name volatility shocks and
+are published before or as the move happens — but they arrive as unstructured text a
+quantitative pipeline can't consume. The intel layer closes that gap: an LLM (Claude)
+converts each announcement headline into a **typed risk signal** the platform can store,
+chart, and test.
+
+The framing is deliberate: the signal is a **volatility-regime leading indicator**, not
+a return predictor. "This announcement means the stock is entering a higher-volatility
+regime, so today's VaR is probably understated" is a testable, defensible claim;
+"the stock will go down" is not.
+
+### 11.2 How it was made — design decisions and their reasons
+
+| Decision | Reason |
+|---|---|
+| Classify from the **headline + feed metadata only** (not the PDF body) | Keeps cost near zero, keeps the labelling task well-defined for evals, and ASX headlines are standardised enough to carry the classification. Body extraction is the documented next iteration, not scope creep in v1. |
+| **Strict JSON schema** on the API (`output_config.format`) with enums for event type and materiality | Every response is guaranteed to parse — no regex-scraping model prose, no malformed rows. The schema *is* the contract. |
+| One API call per announcement, **system prompt cached** (`cache_control`) | The instruction block is paid for once per run, not per announcement. |
+| Signals **upsert keyed on the exchange's `documentKey`** | Same idempotence guarantee as prices: an announcement is extracted (and paid for) exactly once, re-runs are no-ops. |
+| `max_new_per_run` **cost cap** in config | A feed anomaly can never trigger an unbounded API bill. Backlogs clear across runs instead. |
+| Every signal row records **model, tokens, cost (USD), latency** | The extraction step is audited exactly like the risk models — the dashboard shows what the layer costs and how it behaves, not just what it says. |
+| Extraction **self-skips without credentials** (log line, exit 0) | The nightly pipeline stays green whether or not the API key is configured; ingestion and the event study still run. The API key is the on/off switch. |
+| **Blind golden-set evals** (`intel/evals.py`) | The labelling template deliberately hides the model's predictions, so human labels aren't anchored. Scoring reports per-class P/R/F1 plus P/R on the one decision that matters downstream: is this high-materiality? |
+| **Event study** (`intel/events.py`) rebuilt from scratch each run | Event-day abnormal return (vs ASX 200) and post/pre realised-vol ratio per flagged announcement — the layer's claim ("flagged news precedes volatility") is tested with data, not asserted. |
+| Stub LLM client in tests | CI never spends money and never flakes on network. |
+
+**Operational quirk discovered during build**: the public ASX announcements feed
+(`asx.api.markitdigital.com`) silently caps every response at the **5 most recent
+announcements per ticker** — `itemsPerPage` and `page` are ignored (verified 2026-07).
+Coverage therefore accumulates through the daily runs; there is no one-shot backfill.
+Consequence: the event study starts empty (each event also needs 20 post-event sessions
+of returns) and fills in over the first weeks of operation.
+
+### 11.3 How to use it
+
+**Prerequisite — an Anthropic API key** (platform.claude.com → API Keys; billed per
+token, not covered by a Claude.ai subscription). At current volumes the spend is
+roughly 1–5 US cents/day on `claude-opus-4-8`, ~10× less on `claude-haiku-4-5`.
+
+**Run locally:**
+
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."        # full string, including the sk-ant prefix
+python -m riskplatform.pipeline intel        # ingest → extract → event study
+python -m riskplatform.pipeline intel        # run again if a backlog exceeds the cap
+streamlit run app/Home.py                    # → "Announcements" page
+```
+
+Without the key, the same command still refreshes announcements and the event study —
+extraction logs a skip and the run stays green.
+
+**Run nightly (GitHub Actions):** add `ANTHROPIC_API_KEY` as a repository secret
+(Settings → Secrets and variables → Actions). The daily workflow already contains the
+intel step; it extracts when the secret exists and self-skips when it doesn't.
+
+**Turn it off / pause spending:** delete the repository secret (extraction skips,
+ingestion keeps accumulating headlines for free), or set `max_new_per_run: 0` in
+`config/portfolio.yaml` to keep the key but stop the calls. Turning it back on clears
+the accumulated backlog at the configured cap per run.
+
+**Evaluate the extraction (do this once enough announcements accumulate):**
+
+```bash
+python -m riskplatform.intel.evals template   # writes evals/golden_template.csv (blind)
+# hand-fill label_event_type + label_materiality, save as evals/golden_set.csv
+python -m riskplatform.intel.evals score      # writes data/intel_eval_metrics.json
+```
+
+The metrics render on the Announcements page next to the signals they audit. Re-run
+`template` periodically — it only offers rows not already in the golden set, so the
+set grows over time. Commit `evals/golden_set.csv`; it is the layer's test fixture.
+
+**Tune it:** everything lives in the `intel:` section of `config/portfolio.yaml` —
+model, per-run call cap, the $/MTok rates used for the cost column, and the event-study
+windows/thresholds.

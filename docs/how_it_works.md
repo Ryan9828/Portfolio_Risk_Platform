@@ -28,8 +28,8 @@ stock), so everything works with **daily returns** — today's percentage change
 platform uses *log returns*, `r_t = ln(P_t / P_{t-1})`, which are mathematically
 convenient: they add up across days, so a 10-day return is just the sum of ten daily ones.
 
-The portfolio return each day is the weighted average of the assets' returns — 11.25%
-of CBA's return, 11.25% of BHP's, ..., 10% of Bitcoin's.
+The portfolio return each day is the weighted average of the assets' returns — 40%
+of VGS's return, 30% of VAS's, 30% of NDQ's.
 
 ### 2.2 Volatility — the size of typical moves
 
@@ -104,10 +104,11 @@ Each method makes different assumptions. Computing all four side by side turns t
    actual daily returns and read off the worst 1% directly. "What would the recent past
    have done to today's portfolio?"
 4. **Monte Carlo** — simulate 10,000 possible tomorrows: draw random shocks that respect
-   the estimated **correlations** between the assets (bank stocks move together; Bitcoin
-   mostly doesn't), push each asset along its own GARCH volatility path, and aggregate
-   with the portfolio weights. This is the only method that natively prices the
-   diversification benefit of the BTC sleeve.
+   the estimated **correlations** between the assets (VGS and NDQ hold overlapping US
+   large-caps and move together; VAS follows the Australian market), push each asset
+   along its own GARCH volatility path, and aggregate with the portfolio weights. This is
+   the only method that natively prices the diversification VAS provides against the two
+   US-heavy funds.
 
 For 10-day horizons, the parametric methods use the GARCH **term structure** — variance
 forecasts for each of the next 10 days, summed — rather than the lazy "multiply by √10"
@@ -164,9 +165,9 @@ monitored by the scheduler.
 ```
 17:30 Sydney, every weekday (GitHub's servers — your laptop can be off)
 │
-├─ 1. Download latest prices (Yahoo Finance, 11 tickers)
+├─ 1. Download latest prices (Yahoo Finance, 5 tickers)
 ├─ 2. Rebuild returns on the ASX trading calendar
-│      (BTC trades weekends; its weekend move lands in Monday's return)
+│      (the AUD/USD benchmark trades 24/5 and is forward-filled onto it)
 ├─ 3. Fit GARCH per asset + portfolio  → tomorrow's volatility forecasts
 ├─ 4. Compute VaR + ES  (4 methods × 95%/99% × 1-day/10-day)
 ├─ 5. Walk-forward backtest + Kupiec/Christoffersen/Basel verdicts
@@ -189,6 +190,41 @@ deliberate and mirrors how regulated risk systems are architected.
   red ✕ = breaches) and the formal test table.
 - **Monitoring & Alerts** — current check statuses and the full alert history.
 - **Methodology** — the formal model documentation.
+- **Announcements** — the LLM-extracted signal feed, extraction cost/quality metrics,
+  and the event study (see Part 7).
+
+## Part 7 — Reading the news before the returns do
+
+Everything in Parts 2–4 has one blind spot: it only sees **prices**. GARCH raises its
+volatility forecast *after* a big move lands in the returns — it reacts, it never
+anticipates. But the most common cause of a single-stock volatility shock is public
+information: a profit downgrade, a capital raising, a regulator opening an
+investigation. That information is published as an ASX announcement — text — hours or
+days before its full effect works through the price series.
+
+The announcement-intelligence layer gives the platform that missing input:
+
+1. **Ingest** — every run pulls the latest announcements for the eight ASX names from
+   the exchange's public feed.
+2. **Extract** — a large language model (Claude) reads each headline and returns a
+   *typed signal* under a strict schema: what kind of event it is (guidance change,
+   capital raising, M&A, routine admin…), how **material** it looks for the stock's
+   risk profile (high/medium/low), and the expected market reception (sentiment,
+   −1 to +1). Because the response format is enforced by the API, the output is data,
+   not prose — it lands in a parquet table like everything else.
+3. **Test** — an **event study** checks the layer's claim against reality. For every
+   flagged announcement it measures the *abnormal return* on the event day (the stock's
+   move minus the index's move) and the *vol ratio* (realised volatility in the 20
+   sessions after ÷ the 20 before). If the model's "high materiality" labels mean
+   anything, those announcements should show bigger abnormal returns and vol ratios
+   above 1 — volatility the GARCH layer only learns about after the fact.
+
+Two honest caveats, both visible on the dashboard. First, an LLM classifier can be
+wrong, so the extraction itself is audited: a hand-labelled **golden set** scores its
+precision and recall, and those numbers render next to the signals they audit. Second,
+the claim being tested is about **risk, not direction** — the layer says "expect
+turbulence", never "the price will fall". That's the difference between a leading
+indicator a risk system can use and a trading signal that wouldn't survive scrutiny.
 
 ## Glossary
 
@@ -205,3 +241,7 @@ deliberate and mirrors how regulated risk systems are architected.
 | Basel traffic light | the regulatory green/yellow/red verdict on a VaR model |
 | PSI | one-number measure of distribution drift |
 | Walk-forward | testing each day using only information available at the time |
+| Materiality | how likely an announcement is to move the stock's risk profile |
+| Abnormal return | the stock's move minus the index's move on the same day |
+| Vol ratio | realised volatility after an event ÷ before; >1 = higher-vol regime |
+| Golden set | hand-labelled examples used to measure the LLM extraction's accuracy |
