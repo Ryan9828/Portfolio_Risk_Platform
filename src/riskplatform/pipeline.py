@@ -4,9 +4,12 @@ Commands:
     python -m riskplatform.pipeline backfill              first run (3y history)
     python -m riskplatform.pipeline run [--offline] [--dry-run-alerts] [--data-dir D]
     python -m riskplatform.pipeline backtest               walk-forward backtest only
+    python -m riskplatform.pipeline intel [--offline]      announcement signals + event study
 
 `run` is holiday-safe: if no new ASX session has appeared since the last stored
-risk-metric date, it logs and exits 0 without touching artifacts.
+risk-metric date, it logs and exits 0 without touching artifacts. `intel` skips
+LLM extraction (but still refreshes the event study) when no Claude credentials
+are configured.
 """
 
 from __future__ import annotations
@@ -125,6 +128,19 @@ def cmd_run(settings: Settings, data_dir: Path, offline: bool, dry_run_alerts: b
     return 0
 
 
+def cmd_intel(settings: Settings, data_dir: Path, offline: bool) -> int:
+    from .intel.events import run_event_study
+    from .intel.extract import run_extraction
+    from .intel.ingest import run_intel_ingestion
+
+    if not offline:
+        run_intel_ingestion(settings, data_dir)
+        run_extraction(settings.intel, data_dir)
+    study = run_event_study(settings, data_dir)
+    log.info("intel stage complete — %d events in study", len(study))
+    return 0
+
+
 def cmd_backtest(settings: Settings, data_dir: Path) -> int:
     returns_table = artifacts.read(data_dir / artifacts.RETURNS)
     if returns_table is None:
@@ -141,7 +157,7 @@ def cmd_backtest(settings: Settings, data_dir: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(prog="riskplatform")
-    parser.add_argument("command", choices=["backfill", "run", "backtest"])
+    parser.add_argument("command", choices=["backfill", "run", "backtest", "intel"])
     parser.add_argument("--offline", action="store_true", help="skip ingestion (use stored prices)")
     parser.add_argument("--dry-run-alerts", action="store_true", help="log alerts instead of filing issues")
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
@@ -153,6 +169,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command in ("backfill", "run"):
         return cmd_run(settings, args.data_dir, offline=args.offline, dry_run_alerts=args.dry_run_alerts)
+    if args.command == "intel":
+        return cmd_intel(settings, args.data_dir, offline=args.offline)
     return cmd_backtest(settings, args.data_dir)
 
 

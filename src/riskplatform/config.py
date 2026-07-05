@@ -50,6 +50,20 @@ class MonitoringConfig:
 
 
 @dataclass(frozen=True)
+class IntelConfig:
+    """Announcement-intelligence stage (LLM extraction over ASX announcements)."""
+
+    model: str = "claude-opus-4-8"
+    max_new_per_run: int = 25          # cost guard: LLM calls per pipeline run
+    per_ticker_fetch: int = 20         # announcements pulled per ticker per run
+    input_usd_per_mtok: float = 5.0    # for the cost column on each signal row
+    output_usd_per_mtok: float = 25.0
+    event_vol_window: int = 20         # sessions either side for realised-vol comparison
+    event_reaction_days: int = 3       # window to look for a post-announcement jump
+    event_jump_zscore: float = 2.0     # |z| threshold that counts as a reaction
+
+
+@dataclass(frozen=True)
 class Settings:
     weights: dict[str, float]
     benchmarks: tuple[str, ...]
@@ -62,6 +76,7 @@ class Settings:
     var: VarConfig = field(default_factory=VarConfig)
     backtest: BacktestConfig = field(default_factory=BacktestConfig)
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
+    intel: IntelConfig = field(default_factory=IntelConfig)
 
     @property
     def portfolio_tickers(self) -> list[str]:
@@ -86,6 +101,7 @@ def load_settings(path: Path | str = DEFAULT_CONFIG) -> Settings:
     v = raw["models"]["var"]
     bt = raw["backtest"]
     m = raw["monitoring"]
+    intel = raw.get("intel", {})
 
     return Settings(
         weights=weights,
@@ -118,5 +134,15 @@ def load_settings(path: Path | str = DEFAULT_CONFIG) -> Settings:
             jump_zscore=float(m["jump_zscore"]),
             jump_vol_window=int(m["jump_vol_window"]),
             stale_days_alert=int(m["stale_days_alert"]),
+        ),
+        intel=IntelConfig(
+            model=str(intel.get("model", IntelConfig.model)),
+            max_new_per_run=int(intel.get("max_new_per_run", IntelConfig.max_new_per_run)),
+            per_ticker_fetch=int(intel.get("per_ticker_fetch", IntelConfig.per_ticker_fetch)),
+            input_usd_per_mtok=float(intel.get("input_usd_per_mtok", IntelConfig.input_usd_per_mtok)),
+            output_usd_per_mtok=float(intel.get("output_usd_per_mtok", IntelConfig.output_usd_per_mtok)),
+            event_vol_window=int(intel.get("event_vol_window", IntelConfig.event_vol_window)),
+            event_reaction_days=int(intel.get("event_reaction_days", IntelConfig.event_reaction_days)),
+            event_jump_zscore=float(intel.get("event_jump_zscore", IntelConfig.event_jump_zscore)),
         ),
     )

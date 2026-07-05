@@ -20,6 +20,10 @@ RISK_METRICS = "risk_metrics.parquet"
 BACKTEST = "backtest_results.parquet"
 ALERTS = "alerts_history.parquet"
 MONITOR_STATUS = "monitor_status.json"
+ANNOUNCEMENTS = "announcements.parquet"
+ANNOUNCEMENT_SIGNALS = "announcement_signals.parquet"
+EVENT_STUDY = "announcement_event_study.parquet"
+INTEL_EVAL = "intel_eval_metrics.json"
 
 
 def _atomic_write_parquet(df: pd.DataFrame, path: Path) -> None:

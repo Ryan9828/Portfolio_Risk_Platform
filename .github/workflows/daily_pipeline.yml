@@ -41,6 +41,13 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           FORCE_TEST_ALERT: ${{ github.event.inputs.force_test_alert || '0' }}
 
+      - name: Run announcement intelligence
+        # LLM extraction self-skips when the ANTHROPIC_API_KEY secret is not configured;
+        # ingestion and the event study still run.
+        run: python -m riskplatform.pipeline intel
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
       - name: Commit data artifacts
         run: |
           git config user.name "risk-bot"

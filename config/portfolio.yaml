@@ -42,6 +42,16 @@ backtest:
   window: 500
   refit_every: 5
 
+intel:
+  model: claude-opus-4-8
+  max_new_per_run: 25          # LLM-call cost guard per pipeline run
+  per_ticker_fetch: 20         # requested; the public feed currently caps at 5/ticker
+  input_usd_per_mtok: 5.0      # opus-4-8 list prices, used for the per-signal cost column
+  output_usd_per_mtok: 25.0
+  event_vol_window: 20
+  event_reaction_days: 3
+  event_jump_zscore: 2.0
+
 monitoring:
   psi_bins: 10
   psi_warn: 0.10

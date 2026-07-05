@@ -23,6 +23,8 @@ GitHub Actions (cron, weekdays 07:30 UTC ≈ ASX close + 90min)
      ├─ backtest    500-day walk-forward; Kupiec, Christoffersen, Basel traffic light
      ├─ monitor     missing data · stale feeds · extreme jumps · PSI drift · VaR breaches
      ├─ alert       GitHub issue per ALERT (deduped, labelled risk-alert)
+     ├─ intel       ASX announcements → Claude → typed risk signals (event type,
+     │              materiality, sentiment) + event study vs abnormal returns and vol
      └─ commit      parquet artifacts → repo → Streamlit Cloud auto-redeploys
 ```
 
@@ -34,6 +36,30 @@ the dashboard, so what you see is exactly what the audited pipeline produced.
 8 ASX blue chips (CBA, BHP, CSL, WES, MQG, WBC, TLS, WOW) equal-weight 11.25% + 10%
 BTC-USD, benchmarked against the S&P/ASX 200 and AUD/USD. Configured in
 [config/portfolio.yaml](config/portfolio.yaml).
+
+## Announcement intelligence (NLP layer)
+
+GARCH only learns about a shock after it shows up in returns. The intel stage adds a
+**leading indicator**: every run pulls the latest ASX announcements for the portfolio
+names and has Claude convert each headline into a typed risk signal under a strict JSON
+schema — event type (guidance update, capital raising, M&A, …), materiality, sentiment.
+Every signal row records the model, token usage, dollar cost and latency, and signals
+are extracted exactly once per announcement (upsert keyed on the exchange's document ID,
+with a per-run call cap as a cost guard).
+
+Two things make this more than "calling an API":
+
+- **Evaluation** — a blind-labelled golden set (`riskplatform.intel.evals`) scores the
+  extraction with per-class precision/recall and, for the decision that matters
+  downstream, precision/recall on *high-materiality* classification. Metrics render on
+  the dashboard next to the signals they audit.
+- **Event study** — for each signal the platform measures the event-day abnormal return
+  (vs the ASX 200) and the realised-vol regime change (20 sessions post / pre), testing
+  the hypothesis that flagged announcements precede volatility the GARCH layer hasn't
+  seen yet.
+
+Run it with `python -m riskplatform.pipeline intel` (needs `ANTHROPIC_API_KEY`; without
+one, ingestion and the event study still run and extraction skips cleanly).
 
 ## Documentation
 

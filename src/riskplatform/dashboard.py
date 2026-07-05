@@ -62,6 +62,22 @@ def load_monitor_status() -> dict | None:
     return artifacts.read_json(DEFAULT_DATA_DIR / artifacts.MONITOR_STATUS)
 
 
+def load_announcements() -> pd.DataFrame | None:
+    return artifacts.read(DEFAULT_DATA_DIR / artifacts.ANNOUNCEMENTS)
+
+
+def load_announcement_signals() -> pd.DataFrame | None:
+    return artifacts.read(DEFAULT_DATA_DIR / artifacts.ANNOUNCEMENT_SIGNALS)
+
+
+def load_event_study() -> pd.DataFrame | None:
+    return artifacts.read(DEFAULT_DATA_DIR / artifacts.EVENT_STUDY)
+
+
+def load_intel_eval() -> dict | None:
+    return artifacts.read_json(DEFAULT_DATA_DIR / artifacts.INTEL_EVAL)
+
+
 def returns_wide(returns_table: pd.DataFrame) -> pd.DataFrame:
     wide = returns_table.pivot_table(index="date", columns="ticker", values="log_return")
     wide.index = pd.to_datetime(wide.index)
