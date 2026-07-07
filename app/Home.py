@@ -18,7 +18,7 @@ metrics, status, returns_table = _load()
 
 st.title("Portfolio Market-Risk Platform")
 st.caption(
-    "Self-updating risk engine — daily GARCH volatility, VaR/ES across three methods, "
+    "Self-updating risk engine — daily GARCH volatility, VaR/ES across four methods, "
     "Basel-style backtesting and drift monitoring. Updated automatically by GitHub Actions "
     "after each ASX close."
 )

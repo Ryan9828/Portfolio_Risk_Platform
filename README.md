@@ -5,7 +5,7 @@
 
 A **live, self-monitoring market-risk system** — not a notebook. Every weekday after ASX
 close it ingests prices, refits GARCH volatility models, computes portfolio VaR and
-Expected Shortfall three ways, backtests itself Basel-style, runs data-quality and drift
+Expected Shortfall four ways, backtests itself Basel-style, runs data-quality and drift
 checks, files GitHub issues on alerts, and publishes the results to a public dashboard.
 
 **Live dashboard**: https://portfolioriskplatform-iysoqtl8vfnwclnujhak2c.streamlit.app/
@@ -50,10 +50,11 @@ with a per-run call cap as a cost guard).
 
 Two things make this more than "calling an API":
 
-- **Evaluation** — a blind-labelled golden set (`riskplatform.intel.evals`) scores the
-  extraction with per-class precision/recall and, for the decision that matters
-  downstream, precision/recall on *high-materiality* classification. Metrics render on
-  the dashboard next to the signals they audit.
+- **Evaluation** — an eval harness (`riskplatform.intel.evals`) scores the extraction
+  against a blind-labelled golden set with per-class precision/recall and, for the
+  decision that matters downstream, precision/recall on *high-materiality*
+  classification. The harness is built and unit-tested; the dashboard renders the
+  metrics once a labelled golden set is committed (in progress).
 - **Event study** — for each signal the platform measures the event-day abnormal return
   (vs the ASX 200) and the realised-vol regime change (20 sessions post / pre), testing
   the hypothesis that flagged announcements precede volatility the GARCH layer hasn't
@@ -90,7 +91,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 ## Tests
 
 ```bash
-pytest   # 24 tests, fully offline (synthetic fixtures; known-answer tests for VaR math)
+pytest   # 32 tests, fully offline (synthetic fixtures; known-answer tests for VaR math)
 ```
 
 CI runs the suite — including an end-to-end pipeline run on synthetic data — on every push.

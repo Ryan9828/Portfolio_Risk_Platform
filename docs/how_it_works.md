@@ -16,7 +16,7 @@ management is:
 
 Not the average day — bad days are what destroy portfolios, and what regulators require
 banks to measure. This platform answers that question every night, for a demonstration
-portfolio of 8 ASX blue-chip stocks (90%, equally weighted) plus Bitcoin (10%), and then
+portfolio of three ASX-listed ETFs (VGS 40%, VAS 30%, NDQ 30%), and then
 — crucially — **checks whether its own answers have been right**.
 
 ## Part 2 — The building blocks
@@ -65,8 +65,9 @@ Two refinements used here:
   often than a bell curve predicts. The Student-t distribution has a tail-thickness
   parameter (ν, "degrees of freedom") fitted from the data; small ν = fat tails. Your
   fitted values (ν ≈ 3–8 across assets) confirm markets are decidedly non-normal.
-- **EGARCH for Bitcoin**: an asymmetric variant, because volatility often reacts
-  differently to crashes than to rallies.
+- **EGARCH (implemented, currently unused)**: an asymmetric variant for assets whose
+  volatility reacts differently to crashes than to rallies. Enabled per-asset via
+  `egarch_assets` in `config/portfolio.yaml` — empty for the current ETF portfolio.
 
 If a fit fails (rare — insufficient data or the optimiser not converging), the system
 falls back to simpler models (GARCH-normal, then EWMA — a simple weighted average of
@@ -130,13 +131,17 @@ confidence, 500 days should produce about 5 breaches.
 Three formal statistical tests then judge the breach record:
 
 - **Kupiec test** — is the *number* of breaches consistent with the promised rate?
-  (6 observed vs 5 expected → p = 0.66 → no evidence of a problem.)
+  (Worked example: 6 observed vs 5 expected → p = 0.66 → no evidence of a problem.)
 - **Christoffersen test** — do breaches *cluster*? A model can have the right count but
   fail catastrophically by producing all its breaches in one crisis week, which is when
   it matters most.
 - **Basel traffic light** — the actual regulatory rule: per 250 days at 99%, ≤4 breaches
-  = green zone, 5–9 = yellow (capital penalty), ≥10 = red (model rejected). This
-  platform's parametric-t model is currently **green**; historical simulation is yellow.
+  = green zone, 5–9 = yellow (capital penalty), ≥10 = red (model rejected). As of the
+  latest committed backtest (`data/backtest_summary.parquet`), both the parametric-t and
+  historical models sit in the **yellow zone** at 99% (10 and 13 breaches over 500 days),
+  and the Christoffersen test flags breach clustering for parametric-t (p = 0.012) —
+  exactly the kind of degradation this platform exists to surface rather than hide, and
+  the reason the backtest verdicts are recomputed and re-published on every run.
 
 ## Part 4 — The system watching itself: monitoring
 
