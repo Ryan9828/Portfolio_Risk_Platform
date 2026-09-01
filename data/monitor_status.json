@@ -1,5 +1,5 @@
 {
-  "overall": "OK",
+  "overall": "WARN",
   "checks": [
     {
       "name": "missing_days",
@@ -18,59 +18,59 @@
     },
     {
       "name": "psi_drift",
-      "status": "OK",
-      "detail": "PSI=0.0937 (warn>0.1, alert>0.25)"
+      "status": "WARN",
+      "detail": "PSI=0.1137 (warn>0.1, alert>0.25)"
     },
     {
       "name": "var_breach",
       "status": "OK",
-      "detail": "2026-08-28: return 0.3712% within prior 99% VaR 1.4571%"
+      "detail": "2026-09-01: return -0.0267% within prior 99% VaR 1.4521%"
     }
   ],
-  "asof": "2026-08-28",
-  "generated_utc": "2026-08-31T15:16:09.654643+00:00",
+  "asof": "2026-09-01",
+  "generated_utc": "2026-09-01T12:39:56.246539+00:00",
   "fits": {
     "VGS.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.16585006222698,
-      "sigma_1d": 0.005409724295760977
+      "nu": 7.1125055784464495,
+      "sigma_1d": 0.005181065393077685
     },
     "VAS.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.513813006531485,
-      "sigma_1d": 0.007312845623017072
+      "nu": 7.44087000673536,
+      "sigma_1d": 0.006472835997144313
     },
     "NDQ.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 10.299178232401804,
-      "sigma_1d": 0.008720153790439843
+      "nu": 10.166118173176903,
+      "sigma_1d": 0.00791237235929561
     },
     "^AXJO": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.945415857992215,
-      "sigma_1d": 0.0072657117718970595
+      "nu": 7.850547245445963,
+      "sigma_1d": 0.006419140261456256
     },
     "AUDUSD=X": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.04199011454555,
-      "sigma_1d": 0.0047363183661373555
+      "nu": 7.058595170142342,
+      "sigma_1d": 0.004713577524039783
     },
     "PORTFOLIO": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.449130899415409,
-      "sigma_1d": 0.005758607626287599
+      "nu": 7.385172672235598,
+      "sigma_1d": 0.005392811115695551
     }
   }
 }
