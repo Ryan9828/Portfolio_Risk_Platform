@@ -19,58 +19,58 @@
     {
       "name": "psi_drift",
       "status": "WARN",
-      "detail": "PSI=0.2168 (warn>0.1, alert>0.25)"
+      "detail": "PSI=0.1994 (warn>0.1, alert>0.25)"
     },
     {
       "name": "var_breach",
       "status": "OK",
-      "detail": "2026-10-26: return -0.1694% within prior 99% VaR 1.6303%"
+      "detail": "2026-10-27: return 0.6336% within prior 99% VaR 1.5232%"
     }
   ],
-  "asof": "2026-10-26",
-  "generated_utc": "2026-10-26T14:27:52.410933+00:00",
+  "asof": "2026-10-27",
+  "generated_utc": "2026-10-27T13:28:32.111387+00:00",
   "fits": {
     "VGS.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.361592083980016,
-      "sigma_1d": 0.005908775840788489
+      "nu": 7.400201233369246,
+      "sigma_1d": 0.005980588905978826
     },
     "VAS.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.563528629457235,
-      "sigma_1d": 0.006341738755586951
+      "nu": 7.5711847253291,
+      "sigma_1d": 0.0064428406467103225
     },
     "NDQ.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 10.194307301613932,
-      "sigma_1d": 0.010043120766591281
+      "nu": 10.262926666966903,
+      "sigma_1d": 0.010046461743246258
     },
     "^AXJO": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.8262891430516275,
-      "sigma_1d": 0.006231581467588082
+      "nu": 7.846151762857385,
+      "sigma_1d": 0.006430791127507856
     },
     "AUDUSD=X": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 6.968103386613817,
-      "sigma_1d": 0.004763394902704014
+      "nu": 6.9498244931947,
+      "sigma_1d": 0.00469317642741553
     },
     "PORTFOLIO": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.629784989604891,
-      "sigma_1d": 0.0060515466449506125
+      "nu": 7.679300638076679,
+      "sigma_1d": 0.006271855427939465
     }
   }
 }
