@@ -19,58 +19,58 @@
     {
       "name": "psi_drift",
       "status": "ALERT",
-      "detail": "PSI=0.2513 (warn>0.1, alert>0.25)"
+      "detail": "PSI=0.2862 (warn>0.1, alert>0.25)"
     },
     {
       "name": "var_breach",
-      "status": "ALERT",
-      "detail": "2026-11-20: loss 2.8110% breached prior 99% 1-day VaR 1.8367% (forecast on 2026-11-19)"
+      "status": "OK",
+      "detail": "2026-11-23: return -0.6418% within prior 99% VaR 3.3751%"
     }
   ],
-  "asof": "2026-11-20",
-  "generated_utc": "2026-11-20T16:17:40.470279+00:00",
+  "asof": "2026-11-23",
+  "generated_utc": "2026-11-23T19:24:22.544980+00:00",
   "fits": {
     "VGS.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 6.712255046406874,
-      "sigma_1d": 0.012769233571877514
+      "nu": 6.69090680895631,
+      "sigma_1d": 0.011035700576604508
     },
     "VAS.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 6.986880714427537,
-      "sigma_1d": 0.009618826567209462
+      "nu": 6.954616297997216,
+      "sigma_1d": 0.008153424658147073
     },
     "NDQ.AX": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 10.019764023173408,
-      "sigma_1d": 0.020586107433866244
+      "nu": 10.003146981696133,
+      "sigma_1d": 0.018139210316245612
     },
     "^AXJO": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.292916496465475,
-      "sigma_1d": 0.009767573603941244
+      "nu": 7.249302217674197,
+      "sigma_1d": 0.008159663840304882
     },
     "AUDUSD=X": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.304350587992798,
-      "sigma_1d": 0.005619248993185154
+      "nu": 7.31666179944453,
+      "sigma_1d": 0.005493362945121975
     },
     "PORTFOLIO": {
       "model": "GARCH",
       "dist": "t",
       "converged": true,
-      "nu": 7.3031091973859406,
-      "sigma_1d": 0.013364395295860438
+      "nu": 7.28382529235533,
+      "sigma_1d": 0.01146357228963363
     }
   }
 }
